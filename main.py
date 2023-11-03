@@ -30,24 +30,22 @@ def tx_rx(cmd, exp: bytes):
     # send our command
     sp.write(cmd)
 
-    # wait to read some serial bytes
+    # read serial bytes for a while
     ans = bytes()
     sp.timeout = .2
-    till = 1
-    while 1:
-        if time.perf_counter() > till:
-            break
+    timeout_wait_ans = time.perf_counter() + 1
+    while time.perf_counter() < timeout_wait_ans:
         ans += sp.readall()
     if sp:
         sp.close()
 
     # check answer
     if ans != exp:
-        raise ExceptionVCP('error: cmd {cmd} exp {exp} ans {ans}')
+        raise ExceptionVCP(f'error: cmd {cmd} exp {exp} ans {ans}')
 
 
 def main():
-
+    
     # output off
     tx_rx('GETC', 'whatever')
 
