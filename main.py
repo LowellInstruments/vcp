@@ -99,6 +99,7 @@ def _main(page: ft.Page):
         if not g_csv_file_path:
             _te('no CSV file chosen')
             return
+        _t(f'found power supply port {g_serial_port_str}')
         s = os.path.basename(g_csv_file_path)
         _t(f'sent file: {s}', color="green")
         _send_file()
