@@ -7,6 +7,7 @@ import flet as ft
 from utils import tx_rx, find_usb_port_automatically
 
 g_csv_file_path = ''
+g_serial_port_str = ''
 
 
 def _main(page: ft.Page):
@@ -41,6 +42,9 @@ def _main(page: ft.Page):
         page.update()
 
     def _send_file():
+        # get the serial port
+        p = g_serial_port_str
+
         # build list of times and voltages
         ls_t = []
         ls_mv = []
@@ -64,13 +68,13 @@ def _main(page: ft.Page):
         _t('starting...')
 
         # output off
-        tx_rx('SOUT0\r', b'OK\r')
+        tx_rx(p, 'SOUT0\r', b'OK\r')
 
         # set ABC normal mode
-        tx_rx('SABC3\r', b'OK\r')
+        tx_rx(p, 'SABC3\r', b'OK\r')
 
         # output on
-        tx_rx('SOUT1\r', b'OK\r')
+        tx_rx(p, 'SOUT1\r', b'OK\r')
 
         # run through the lists
         for i, t in enumerate(ls_t):
@@ -78,16 +82,18 @@ def _main(page: ft.Page):
             _t(f'sleep {t} set {mv} mV')
             time.sleep(t)
             s = 'SETD3{}0100\r'.format(mv)
-            tx_rx(s, b'OK\rOK\r')
+            tx_rx(p, s, b'OK\rOK\r')
 
         # output off
-        tx_rx('SOUT0\r', b'OK\r')
+        tx_rx(p, 'SOUT0\r', b'OK\r')
 
         _t('done')
 
     def click_btn_send_file(_):
         vp = '10c4:ea60'
-        if not find_usb_port_automatically(vp):
+        global g_serial_port_str
+        g_serial_port_str = find_usb_port_automatically(vp)
+        if not g_serial_port_str:
             _te('error: power supply not attached via USB')
             return
         if not g_csv_file_path:

@@ -1,15 +1,15 @@
-import csv
 import time
 import serial
+from serial.tools import list_ports
 
 
-SERIAL_PORT = '/dev/ttyUSB0'
+serial_port_str = ''
 
 
 def find_usb_port_automatically(vp):
     # vp: vid_pid -> '1234:5678'
     vp = vp.upper()
-    for p in serial.tools.list_ports.comports():
+    for p in list_ports.comports():
         info = dict({"Name": p.name,
                      "Description": p.description,
                      "Manufacturer": p.manufacturer,
@@ -22,10 +22,10 @@ class ExceptionVCP(Exception):
     pass
 
 
-def tx_rx(cmd, exp: bytes):
+def tx_rx(port, cmd, exp: bytes):
 
     # get serial port
-    sp = serial.Serial(SERIAL_PORT, 9600, timeout=.1)
+    sp = serial.Serial(port, 9600, timeout=.1)
 
     # flush stuff
     sp.readall()
@@ -56,27 +56,3 @@ def tx_rx(cmd, exp: bytes):
     print('ans', ans)
     if ans != exp:
         raise ExceptionVCP(f'error: cmd {cmd} exp {exp} ans {ans}')
-
-
-def main():
-    
-    # output off
-    tx_rx('SOUT0\r', b'OK\r')
-
-    # set ABC normal mode
-    tx_rx('SABC3\r', b'OK\r')
-
-    # set voltage 5 V and 1 A
-    v = '0500'
-    c = '0100'
-    assert len(v) == 4
-    assert len(c) == 4
-    s = 'SETD3{}{}\r'.format(v,c)
-    tx_rx(s, b'OK\rOK\r')
-
-    # output on
-    tx_rx('SOUT1\r', b'OK\r')
-
-
-if __name__ == '__main__':
-    main()
