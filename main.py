@@ -88,7 +88,8 @@ def _main(page: ft.Page):
         # output off
         tx_rx(p, 'SOUT0\r', b'OK\r')
 
-        _t('done')
+        # banner
+        _t('all file done', color='green')
 
     def click_btn_send_file(_):
         vp = '10c4:ea60'
