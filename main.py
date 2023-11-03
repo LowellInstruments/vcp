@@ -58,10 +58,11 @@ def _main(page: ft.Page):
                     return
                 # nick wants this
                 if i == 0:
-                    st_v = 0
-                    st_t = 10
-                    ls_t.append(st_t)
-                    ls_mv.append(st_v)
+                    t = 10
+                    mv = 0
+                    ls_t.append(t)
+                    mv = str(mv).rjust(4, '0')
+                    ls_mv.append(mv)
                 if i:
                     t, mv = row
                     ls_t.append(int(t))
@@ -94,7 +95,6 @@ def _main(page: ft.Page):
             tx_rx(p, s, b'OK\rOK\r')
             global g_status
             if g_status == 'stop':
-                _t('user asked to stop')
                 break
 
         # going back to 0
