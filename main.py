@@ -171,6 +171,7 @@ def _main(page: ft.Page):
     )
 
     page.window_center()
+    page.window_width = 1024
     page.window_height = 800
     _t('VCP started')
 
