@@ -1,58 +1,166 @@
+import csv
+import os
 import time
-import serial
+
+import flet as ft
+
+from utils import tx_rx
+
+g_csv_file_path = ''
 
 
-SERIAL_PORT = '/dev/ttyUSB0'
+def _main(page: ft.Page):
 
+    def _t(s, color=""):
+        # logging
+        lv.controls.append(ft.Text(str(s), size=20, color=color))
+        page.update()
+        print(str(s))
 
-class ExceptionVCP(Exception):
-    pass
+    def _te(s):
+        return _t(s, color="red")
 
+    def click_btn_clear_trace(_):
+        lv.controls = []
+        page.update()
 
-def tx_rx(cmd, exp: bytes):
+    def _select_csv_file(e: ft.FilePickerResultEvent):
+        if not e.files:
+            _te('select a VCP CSV file')
+            return
+        if len(e.files) > 1:
+            _te('select only one, please')
+            return
+        global g_csv_file_path
+        g_csv_file_path = e.files[0].path
+        _t(f'loaded file: {e.files[0].name}', color="green")
 
-    # get serial port
-    sp = serial.Serial(SERIAL_PORT, 9600, timeout=1)
+    def click_btn_select_csv_file(_):
+        dialog_select_csv_file.on_result = _select_csv_file
+        dialog_select_csv_file.pick_files(allow_multiple=False)
+        page.update()
 
-    # flush stuff
-    sp.readall()
-    sp.flushInput()
+    def _send_file():
+        # build list of times and voltages
+        ls_t = []
+        ls_mv = []
+        with open(g_csv_file_path, 'r') as f:
+            rd = csv.reader(f, delimiter=',')
+            for i, row in enumerate(rd):
+                if i == 0 and row != ['delta time (s)', 'voltage (mV)']:
+                    _te('bad CSV header')
+                    return
+                if i:
+                    t, mv = row
+                    ls_t.append(int(t))
+                    if int(mv) > 5000:
+                        _te(f'bad voltage {mv} at row #{i+1}')
+                        return
+                    # the power supply wants AB.CD
+                    mv = int(int(mv) / 10)
+                    mv = str(mv).rjust(4, '0')
+                    ls_mv.append(mv)
 
-    # send our command
-    # if type(cmd) is not bytes:
-    #     cmd = cmd.encode()
-    sp.write(cmd)
+        _t('starting...')
 
-    # read serial bytes for a while
-    sp.timeout = .2
-    ans = bytes()
-    timeout_wait_ans = time.perf_counter() + 1
-    while time.perf_counter() < timeout_wait_ans:
-        try:
-            ans += sp.readall()
-        except (Exception, ):
-            # when timeout
-            pass
+        # output off
+        tx_rx('SOUT0\r', b'OK\r')
 
-    # close serial port when out the loop
-    if sp:
-        sp.close()
+        # set ABC normal mode
+        tx_rx('SABC3\r', b'OK\r')
 
-    # check answer
-    if ans != exp:
-        raise ExceptionVCP(f'error: cmd {cmd} exp {exp} ans {ans}')
+        # output on
+        tx_rx('SOUT1\r', b'OK\r')
+
+        # run through the lists
+        for i, t in enumerate(ls_t):
+            mv = ls_mv[i]
+            _t(f'sleep {t} set {mv} mV')
+            time.sleep(t)
+            s = 'SETD3{}0100\r'.format(mv)
+            tx_rx(s, b'OK\rOK\r')
+
+        # output off
+        tx_rx('SOUT0\r', b'OK\r')
+
+        _t('done')
+
+    def click_btn_send_file(_):
+        if not g_csv_file_path:
+            _te('no CSV file chosen')
+            return
+        s = os.path.basename(g_csv_file_path)
+        _t(f'sent file: {s}', color="green")
+        _send_file()
+
+    # ============
+    # HTML layout
+    # ============
+    lv = ft.ListView(spacing=10, padding=20, auto_scroll=True, height=600)
+    dialog_select_csv_file = ft.FilePicker()
+
+    page.add(
+        # this only shows when needed :)
+        dialog_select_csv_file,
+        ft.Column(
+            [
+                ft.Row(
+                    [
+                        ft.Text(
+                            "Voltage Controlled Pressure Regulator",
+                            style=ft.TextThemeStyle.HEADLINE_MEDIUM,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=100,
+                ),
+                ft.Row(
+                    [
+                        ft.IconButton(
+                            icon=ft.icons.FILE_UPLOAD,
+                            icon_color="blue400",
+                            icon_size=60,
+                            tooltip="load CSV file",
+                            on_click=click_btn_select_csv_file,
+                            expand=2
+                        ),
+                        ft.IconButton(
+                            icon=ft.icons.PLAY_ARROW,
+                            icon_color="blue400",
+                            icon_size=60,
+                            tooltip="start",
+                            on_click=click_btn_send_file,
+                            expand=2
+                        ),
+                        ft.IconButton(
+                            icon=ft.icons.DELETE,
+                            icon_color="red400",
+                            icon_size=60,
+                            tooltip="clear trace",
+                            on_click=click_btn_clear_trace,
+                            expand=2
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+                ft.Row(
+                    [
+                        lv
+                    ]
+                )
+            ], spacing=25
+        )
+    )
+
+    page.window_center()
+    page.window_height = 800
+    _t('VCP started')
 
 
 def main():
-    
-    # output off
-    tx_rx('GETC', 'whatever')
+    ft.app(target=_main)
+    # ft.app(target=_main, view=ft.WEB_BROWSER, assets_dir="assets")
 
-    # choose preset 3
-    tx_rx('GETC', 'whatever')
 
-    # set voltage current preset 3
-    tx_rx('GETC', 'whatever')
-
-    # output on
-    tx_rx('GETC', 'whatever')
+if __name__ == "__main__":
+    main()
