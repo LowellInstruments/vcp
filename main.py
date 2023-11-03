@@ -8,6 +8,7 @@ from utils import tx_rx, find_usb_port_automatically
 
 g_csv_file_path = ''
 g_serial_port_str = ''
+g_status = ''
 
 
 def _main(page: ft.Page):
@@ -55,6 +56,12 @@ def _main(page: ft.Page):
                     _te('bad CSV header')
                     _te('must be "delta time (s),voltage (mV)"')
                     return
+                # nick wants this
+                if i == 0:
+                    st_v = 0
+                    st_t = 10
+                    ls_t.append(st_t)
+                    ls_mv.append(st_v)
                 if i:
                     t, mv = row
                     ls_t.append(int(t))
@@ -78,18 +85,34 @@ def _main(page: ft.Page):
         tx_rx(p, 'SOUT1\r', b'OK\r')
 
         # run through the lists
+        n = len(ls_t)
         for i, t in enumerate(ls_t):
             mv = ls_mv[i]
-            _t(f'row #{i+1} sleep {t} set {int(mv) * 10} mV')
+            _t(f'row #{i+1} / {n}: sleep {t} set {int(mv) * 10} mV')
             time.sleep(t)
             s = 'SETD3{}0100\r'.format(mv)
             tx_rx(p, s, b'OK\rOK\r')
+            global g_status
+            if g_status == 'stop':
+                _t('user asked to stop')
+                break
+
+        # going back to 0
+        _t(f'resetting to 0 V in 5 seconds')
+        time.sleep(5)
+        s = 'SETD3{}0100\r'.format('0000')
+        tx_rx(p, s, b'OK\rOK\r')
 
         # output off
         tx_rx(p, 'SOUT0\r', b'OK\r')
 
         # banner
         _t('all file done', color='green')
+
+    def click_btn_stop_file(_):
+        global g_status
+        g_status = 'stop'
+        _t(f'{g_status.upper()}')
 
     def click_btn_send_file(_):
         vp = '10c4:ea60'
@@ -104,13 +127,16 @@ def _main(page: ft.Page):
         _t(f'found power supply port {g_serial_port_str}')
         s = os.path.basename(g_csv_file_path)
         _t(f'sent file: {s}', color="green")
+        global g_status
         try:
             # -------------
             # send CSV file
             # -------------
+            g_status = 'run'
             _send_file()
         except (Exception, ) as ex:
             _te(f'exception {str(ex)}')
+        g_status = 'stopped'
 
     # ============
     # HTML layout
@@ -149,6 +175,14 @@ def _main(page: ft.Page):
                             icon_size=60,
                             tooltip="start",
                             on_click=click_btn_send_file,
+                            expand=2
+                        ),
+                        ft.IconButton(
+                            icon=ft.icons.STOP,
+                            icon_color="red400",
+                            icon_size=60,
+                            tooltip="stop",
+                            on_click=click_btn_stop_file,
                             expand=2
                         ),
                         ft.IconButton(
