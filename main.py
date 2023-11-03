@@ -94,7 +94,7 @@ def _main(page: ft.Page):
         global g_serial_port_str
         g_serial_port_str = find_usb_port_automatically(vp)
         if not g_serial_port_str:
-            _te('error: power supply not attached via USB')
+            _te('error: USB power supply not detected')
             return
         if not g_csv_file_path:
             _te('no CSV file chosen')
@@ -102,7 +102,10 @@ def _main(page: ft.Page):
         _t(f'found power supply port {g_serial_port_str}')
         s = os.path.basename(g_csv_file_path)
         _t(f'sent file: {s}', color="green")
-        _send_file()
+        try:
+            _send_file()
+        except (Exception, ) as ex:
+            _te(f'exception {str(ex)}')
 
     # ============
     # HTML layout
