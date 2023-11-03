@@ -79,7 +79,7 @@ def _main(page: ft.Page):
         # run through the lists
         for i, t in enumerate(ls_t):
             mv = ls_mv[i]
-            _t(f'sleep {t} set {mv} mV')
+            _t(f'row #{i+1} sleep {t} set {mv} mV')
             time.sleep(t)
             s = 'SETD3{}0100\r'.format(mv)
             tx_rx(p, s, b'OK\rOK\r')
@@ -103,6 +103,9 @@ def _main(page: ft.Page):
         s = os.path.basename(g_csv_file_path)
         _t(f'sent file: {s}', color="green")
         try:
+            # -------------
+            # send CSV file
+            # -------------
             _send_file()
         except (Exception, ) as ex:
             _te(f'exception {str(ex)}')
