@@ -87,7 +87,7 @@ def _main(page: ft.Page):
         _t('going to 0 at start for 10 seconds')
         s = 'SETD300000100\r'
         tx_rx(p, s, b'OK\rOK\r')
-        time.sleep(t)
+        time.sleep(10)
 
         # run through the lists
         n = len(ls_t)
