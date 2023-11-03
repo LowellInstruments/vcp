@@ -85,7 +85,7 @@ def _main(page: ft.Page):
 
         # at start, go to zero
         _t('going to 0 at start for 10 seconds')
-        s = 'SETD300000100\r'.format(mv)
+        s = 'SETD300000100\r'
         tx_rx(p, s, b'OK\rOK\r')
         time.sleep(t)
 
