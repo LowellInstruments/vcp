@@ -31,6 +31,10 @@ dds/macs/orange/
 !tests/55-55-55-55-55-55/*
 
 
+# don't omit the example
+!example.csv
+
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
