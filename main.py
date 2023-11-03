@@ -53,6 +53,7 @@ def _main(page: ft.Page):
             for i, row in enumerate(rd):
                 if i == 0 and row != ['delta time (s)', 'voltage (mV)']:
                     _te('bad CSV header')
+                    _te('must be "delta time (s),voltage (mV)"')
                     return
                 if i:
                     t, mv = row
