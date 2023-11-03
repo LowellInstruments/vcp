@@ -79,7 +79,7 @@ def _main(page: ft.Page):
         # run through the lists
         for i, t in enumerate(ls_t):
             mv = ls_mv[i]
-            _t(f'row #{i+1} sleep {t} set {mv} mV')
+            _t(f'row #{i+1} sleep {t} set {int(mv) * 10} mV')
             time.sleep(t)
             s = 'SETD3{}0100\r'.format(mv)
             tx_rx(p, s, b'OK\rOK\r')
