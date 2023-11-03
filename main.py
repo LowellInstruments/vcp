@@ -56,13 +56,6 @@ def _main(page: ft.Page):
                     _te('bad CSV header')
                     _te('must be "delta time (s),voltage (mV)"')
                     return
-                # nick wants this
-                if i == 0:
-                    t = 10
-                    mv = 0
-                    ls_t.append(t)
-                    mv = str(mv).rjust(4, '0')
-                    ls_mv.append(mv)
                 if i:
                     t, mv = row
                     ls_t.append(int(t))
@@ -74,6 +67,11 @@ def _main(page: ft.Page):
                     mv = str(mv).rjust(4, '0')
                     ls_mv.append(mv)
 
+        # warning
+        if ls_t[0] != 0:
+            _te('first elapsed time should be zero')
+            return
+
         _t('starting...')
 
         # output off
@@ -84,6 +82,12 @@ def _main(page: ft.Page):
 
         # output on
         tx_rx(p, 'SOUT1\r', b'OK\r')
+
+        # at start, go to zero
+        _t('going to 0 at start for 10 seconds')
+        s = 'SETD300000100\r'.format(mv)
+        tx_rx(p, s, b'OK\rOK\r')
+        time.sleep(t)
 
         # run through the lists
         n = len(ls_t)
