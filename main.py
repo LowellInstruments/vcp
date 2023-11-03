@@ -4,7 +4,7 @@ import time
 
 import flet as ft
 
-from utils import tx_rx
+from utils import tx_rx, find_usb_port_automatically
 
 g_csv_file_path = ''
 
@@ -86,6 +86,10 @@ def _main(page: ft.Page):
         _t('done')
 
     def click_btn_send_file(_):
+        vp = '10c4:ea60'
+        if not find_usb_port_automatically(vp):
+            _te('error: power supply not attached via USB')
+            return
         if not g_csv_file_path:
             _te('no CSV file chosen')
             return

@@ -6,6 +6,18 @@ import serial
 SERIAL_PORT = '/dev/ttyUSB0'
 
 
+def find_usb_port_automatically(vp):
+    # vp: vid_pid -> '1234:5678'
+    vp = vp.upper()
+    for p in serial.tools.list_ports.comports():
+        info = dict({"Name": p.name,
+                     "Description": p.description,
+                     "Manufacturer": p.manufacturer,
+                     "Hwid": p.hwid})
+        if vp in info['Hwid']:
+            return '/dev/' + info['Name']
+
+
 class ExceptionVCP(Exception):
     pass
 
