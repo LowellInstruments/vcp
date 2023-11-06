@@ -58,10 +58,12 @@ def _main(page: ft.Page):
                     return
                 if i:
                     t, mv = row
-                    ls_t.append(int(t))
                     if int(mv) > 5000:
                         _te(f'bad voltage {mv} at row #{i+1}')
                         return
+                    # append the time
+                    ls_t.append(int(t))
+
                     # the power supply wants AB.CD
                     mv = int(int(mv) / 10)
                     mv = str(mv).rjust(4, '0')
@@ -103,9 +105,9 @@ def _main(page: ft.Page):
 
         # going back to 0
         _t(f'resetting to 0 V in 5 seconds')
-        time.sleep(5)
         s = 'SETD3{}0100\r'.format('0000')
         tx_rx(p, s, b'OK\rOK\r')
+        time.sleep(5)
 
         # output off
         tx_rx(p, 'SOUT0\r', b'OK\r')
